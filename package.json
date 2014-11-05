@@ -36,5 +36,9 @@
     "wejs",
     "plugin",
     "sails.js"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:ABS-org/we-plugin-migrate-cdp.git"
+  }
 }
