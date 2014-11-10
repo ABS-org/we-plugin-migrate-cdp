@@ -14,9 +14,31 @@ function init() {
     // aqui vc pode acessar o sails com sails e os models pode sails.models[modelname]
 
     sails.log.warn('Rodo! isso é um debug');
+    sails.log('path cwd: ',cwd);
+
+    //Converter Class
+    var CSVConverter = require("csvtojson").core.Converter;
+    var fs = require("fs");
+
+    var testData = cwd + "/files/migration/migracao_relatos.csv";
+    var data = fs.readFileSync(testData).toString();
+    var csvConverter = new CSVConverter();
+
+    //end_parsed will be emitted once parsing finished
+    csvConverter.on("end_parsed", function(jsonObj) {
+        //final result poped here as normal.
+    });
+    csvConverter.fromString(data,function(err,jsonObj){
+        if (err){
+          //err handle
+        }
+        console.log(jsonObj);
+    });
+
+    var usersToSave = [];
 
     // ao terminar rode o doneAll();
-    doneAll();
+    //doneAll();
   })
 }
 
