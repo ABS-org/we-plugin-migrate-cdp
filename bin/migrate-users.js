@@ -11,7 +11,7 @@ var loadSails = require(cwd + '/bin/loadSails.js');
 
 function init() {
   return loadSails(function afterLoadSails(err, sails) {
-    
+
     sails.log.warn('Plugin migrate CdP...');
     sails.log('Path cwd: ',cwd);
 
@@ -30,36 +30,46 @@ function init() {
 
     var usersToSave =  [];
 
-    csvConverter.fromString(data,function(err,jsonObj){
-      console.log('jsonObj: ', jsonObj);
+    csvConverter.fromString(data,function(err,jsonObjs){
+      var jsonObj = null;
       // Loop in objCsv for construct user array
-      for (i = 0; i < jsonObj.length; i++) { 
+      for (var i = 0; i < jsonObjs.length; i++) {
+
+        jsonObj =  jsonObjs[i];
+
+        sails.log.info('jsonObj: ', jsonObj);
+
         var username = String(jsonObj.Nome);
         var userNomeNew = username.toString().toLowerCase();
         userNomeNew = userNomeNew.replace(/[^a-zA-Z ]/g, "");
         userNomeNew = userNomeNew.replace(/\s/g, '');
 
-        var arrayUser = {   'username' : userNomeNew,
-                            'password' : 123456,
-                            'biography' : jsonObj.Bio,
-                            'email' : jsonObj.Email,
-                            'displayName' : jsonObj['User Trusted Contacts']
-                            /*'birthDate' : jsonObj['Data de nascimento']*/ }
+        var arrayUser = {
+          'username' : userNomeNew,
+          'password' : 123456,
+          'biography' : jsonObj.Bio,
+          'email' : jsonObj.Email,
+          'displayName' : jsonObj
+          /*'birthDate' : jsonObj['Data de nascimento']*/
+        }
         //user.image = jsonObj.Nome;
         //user.password -> Mysql Drupal
         usersToSave.push(arrayUser);
-        console.log('usersToSave: ', usersToSave);
-      }        
+      }
+
+
+      User.create(usersToSave).exec(function(err, newRecord) {
+        console.log('err: ', err);
+        console.log('newRecord: ', newRecord);
+      });
+      // ao terminar rode o doneAll();
+      //doneAll();
     });
-    
-    User.create(usersToSave).exec(function(err, newRecord) {
-      console.log('err: ', err);
-      console.log('newRecord: ', newRecord);
-    });
-    // ao terminar rode o doneAll();
-    //doneAll();
-    
   })
+}
+
+function registerMultipleRecordsMigrated(records) {
+
 }
 
 function doneAll(err){
