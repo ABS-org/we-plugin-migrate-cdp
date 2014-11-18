@@ -31,43 +31,33 @@ function init() {
     var usersToSave =  [];
 
     csvConverter.fromString(data,function(err,jsonObj){
-        // Loop in objCsv for construct user array
-        jsonObj.forEach(function(objCsv) {
+      console.log('jsonObj: ', jsonObj);
+      // Loop in objCsv for construct user array
+      for (i = 0; i < jsonObj.length; i++) { 
+        var username = String(jsonObj.Nome);
+        var userNomeNew = username.toString().toLowerCase();
+        userNomeNew = userNomeNew.replace(/[^a-zA-Z ]/g, "");
+        userNomeNew = userNomeNew.replace(/\s/g, '');
 
-            var username = String(objCsv.Nome);
-            var userNomeNew = username.toString().toLowerCase();
-            userNomeNew = userNomeNew.replace(/[^a-zA-Z ]/g, "");
-            userNomeNew = userNomeNew.replace(/\s/g, '');
-
-            var arrayUser = {   'username' : userNomeNew,
-                                'biography' : objCsv.Bio,
-                                'email' : objCsv.Email,
-                                'displayName' : objCsv['User Trusted Contacts']
-                                /*'birthDate' : objCsv['Data de nascimento']*/ }
-            //user.image = objCsv.Nome;
-            //user.password -> Mysql Drupal
-            
-            // Array push with user info's
-            //usersToSave.push(arrayUser);
-            console.log("Add user ",arrayUser,"...");
-            User.create(arrayUser).exec(function(err, newRecord) {
-              console.log('err: ', err);
-              console.log('newRecord: ', newRecord);
-              //res.log('newRecord: ', newRecord);
-              //return newRecord;
-            });    
-        });
-        /*
-        User.create(usersToSave).exec(function(err, newRecord) {
-          console.log('err: ', err);
-          console.log('newRecord: ', newRecord);
-          //res.log('newRecord: ', newRecord);
-          return newRecord;
-        });
-        */
-        // ao terminar rode o doneAll();
-        //doneAll();
+        var arrayUser = {   'username' : userNomeNew,
+                            'password' : 123456,
+                            'biography' : jsonObj.Bio,
+                            'email' : jsonObj.Email,
+                            'displayName' : jsonObj['User Trusted Contacts']
+                            /*'birthDate' : jsonObj['Data de nascimento']*/ }
+        //user.image = jsonObj.Nome;
+        //user.password -> Mysql Drupal
+        usersToSave.push(arrayUser);
+        console.log('usersToSave: ', usersToSave);
+      }        
     });
+    
+    User.create(usersToSave).exec(function(err, newRecord) {
+      console.log('err: ', err);
+      console.log('newRecord: ', newRecord);
+    });
+    // ao terminar rode o doneAll();
+    //doneAll();
     
   })
 }
