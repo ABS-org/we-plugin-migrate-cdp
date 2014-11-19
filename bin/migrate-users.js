@@ -12,6 +12,13 @@ var loadSails = require(cwd + '/bin/loadSails.js');
 function init() {
   return loadSails(function afterLoadSails(err, sails) {
 
+    var sql = 'select name from users limit 0,10';
+    Drupal.query(sql,function(err, result ){
+      console.warn('err: ', err);
+      console.info('result: ', result);
+    });
+
+    /*
     sails.log.warn('Plugin migrate CdP...');
     sails.log('Path cwd: ',cwd);
 
@@ -50,7 +57,7 @@ function init() {
           'biography' : jsonObj.Bio,
           'email' : jsonObj.Email,
           'displayName' : jsonObj
-          /*'birthDate' : jsonObj['Data de nascimento']*/
+          /*'birthDate' : jsonObj['Data de nascimento']
         }
         //user.image = jsonObj.Nome;
         //user.password -> Mysql Drupal
@@ -63,8 +70,9 @@ function init() {
         console.log('newRecord: ', newRecord);
       });
       // ao terminar rode o doneAll();
-      //doneAll();
+      //doneAll();      
     });
+    */
   })
 }
 

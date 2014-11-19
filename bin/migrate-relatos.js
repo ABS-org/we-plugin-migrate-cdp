@@ -11,10 +11,8 @@ var loadSails = require(cwd + '/bin/loadSails.js');
 
 function init() {
   return loadSails(function afterLoadSails(err, sails) {
-    // aqui vc pode acessar o sails com sails e os models pode sails.models[modelname]
-
-    sails.log.warn('Rodo! isso é um debug');
-    sails.log('path cwd: ',cwd);
+    sails.log.warn('Plugin migrate CdP...');
+    sails.log('Path cwd: ',cwd);
 
     //Converter Class
     var CSVConverter = require("csvtojson").core.Converter;
@@ -28,17 +26,43 @@ function init() {
     csvConverter.on("end_parsed", function(jsonObj) {
         //final result poped here as normal.
     });
-    csvConverter.fromString(data,function(err,jsonObj){
-        if (err){
-          //err handle
+
+    var usersToSave =  [];
+
+    csvConverter.fromString(data,function(err,jsonObjs){
+      var jsonObj = null;
+      // Loop in objCsv for construct user array
+      for (var i = 0; i < jsonObjs.length; i++) {
+
+        jsonObj =  jsonObjs[i];
+
+        sails.log.info('jsonObj: ', jsonObj);
+
+        var username = String(jsonObj.Nome);
+        var userNomeNew = username.toString().toLowerCase();
+        userNomeNew = userNomeNew.replace(/[^a-zA-Z ]/g, "");
+        userNomeNew = userNomeNew.replace(/\s/g, '');
+
+        var arrayUser = {
+          'username' : userNomeNew,
+          'password' : 123456,
+          'biography' : jsonObj.Bio,
+          'email' : jsonObj.Email,
+          'displayName' : jsonObj
+          /*'birthDate' : jsonObj['Data de nascimento']*/
         }
-        console.log(jsonObj);
-    });
+        //user.image = jsonObj.Nome;
+        //user.password -> Mysql Drupal
+        usersToSave.push(arrayUser);
+      }
 
-    var usersToSave = [];
 
-    // ao terminar rode o doneAll();
-    //doneAll();
+      User.create(usersToSave).exec(function(err, newRecord) {
+        console.log('err: ', err);
+        console.log('newRecord: ', newRecord);
+      });
+      // ao terminar rode o doneAll();
+      //doneAll();
   })
 }
 
