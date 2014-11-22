@@ -27,43 +27,64 @@ function init() {
         //final result poped here as normal.
     });
 
-    var usersToSave =  [];
+    var relatosToSave =  [];
 
-    csvConverter.fromString(data,function(err,jsonObjs){
+    csvConverter.fromString(data,function(err, relatoObjs){
+      
       var jsonObj = null;
-      // Loop in objCsv for construct user array
-      for (var i = 0; i < jsonObjs.length; i++) {
 
-        jsonObj =  jsonObjs[i];
+      // Loop in objCsv for construct relato array
+      for (var i = 0; i < relatoObjs.length; i++) {
 
-        sails.log.info('jsonObj: ', jsonObj);
+        //sails.log.info('jsonObj: ', relatoObjs[i]);
+        //sails.log.info('relatoObjs keys:', Object.keys(relatoObjs[i]));
 
-        var username = String(jsonObj.Nome);
-        var userNomeNew = username.toString().toLowerCase();
-        userNomeNew = userNomeNew.replace(/[^a-zA-Z ]/g, "");
-        userNomeNew = userNomeNew.replace(/\s/g, '');
+        var arrayRelatoAll = {
+              'uid_usuario' : relatoObjs[i].uid_usuario,
+              'titulo' : relatoObjs[i].titulo,
+              'venda_seu_peixe' : relatoObjs[i].venda_seu_peixe,
+              'para_comecar_imagem' : relatoObjs[i].para_comecar_imagem,
+              'ambito_experiencia' : relatoObjs[i].ambito_experiencia,
+              'topicos' : relatoObjs[i].topicos,
+              'sobre_experiencia' : relatoObjs[i].sobre_experiencia,
+              'como_funcionou' : relatoObjs[i].como_funcionou,
+              'desafios' : relatoObjs[i].desafios,
+              'novidades' : relatoObjs[i].novidades,
+              'campo_livre' : relatoObjs[i].campo_livre,
+              'galeria_imagens' : relatoObjs[i].galeria_imagens,
+              'nome_pessoas' : relatoObjs[i].nome_pessoas,
+              'categorias_relato' : relatoObjs[i].categorias_relato,
+              'nome_pessoas' : relatoObjs[i].nome_pessoas,
+              'categoria_profissao' : relatoObjs[i].categoria_profissao,
+              'pontos_envolvidos' : relatoObjs[i].pontos_envolvidos,
+              'local' : relatoObjs[i].local,
+              'estado' : relatoObjs[i].estado,
+              'comunidades' : relatoObjs[i].comunidades
+            };
 
-        var arrayUser = {
-          'username' : userNomeNew,
-          'password' : 123456,
-          'biography' : jsonObj.Bio,
-          'email' : jsonObj.Email,
-          'displayName' : jsonObj
-          /*'birthDate' : jsonObj['Data de nascimento']*/
-        }
-        //user.image = jsonObj.Nome;
-        //user.password -> Mysql Drupal
-        usersToSave.push(arrayUser);
-      }
+        var arrayRelatoWe = {
+              'uid_usuario' : relatoObjs[i].uid_usuario,
+              'titulo' : relatoObjs[i].titulo,
+              'descricao' : relatoObjs[i].sobre_experiencia,
+              'local' : relatoObjs[i].local
+            };
+        
+        //sails.log.info('arrayRelato:', arrayRelatoWe);
 
+        relatosToSave.push(arrayRelatoWe);
 
-      User.create(usersToSave).exec(function(err, newRecord) {
+      } // end for
+
+      
+      Relato.create(relatosToSave).exec(function(err, newRecord) {
         console.log('err: ', err);
         console.log('newRecord: ', newRecord);
       });
+      
       // ao terminar rode o doneAll();
       //doneAll();
-  })
+    });
+  });
 }
 
 function doneAll(err){

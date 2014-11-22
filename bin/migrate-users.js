@@ -52,6 +52,7 @@ function init() {
           objUser = sqlResult[i];
 
           var arrayUser = {
+              'uid_drupal' : objUser.uid,
               'username' : objUser.users_name.toString(),
               'biography' : objUser.biography,
               'email' : objUser.users_mail.toString(),
