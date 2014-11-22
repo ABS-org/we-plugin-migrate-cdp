@@ -39,46 +39,53 @@ function init() {
                   +"users_created DESC "
                 +"LIMIT 50 OFFSET 0";
     
-    Drupal.query(sql,function(err, result ){
+    var usersToSave =  [];
+
+    Drupal.query(sql,function(err, sqlResult ){
 
       if(err){
         sails.log.warn('err: ', err);
       } else { 
-        // Array to push users
-        var usersToSave =  [];
 
-        // Loop in result for take users info
-        result.forEach(function(objUser) {
+        for (var i = 0; i < sqlResult.length; i++) {
+          
+          objUser = sqlResult[i];
 
-            sails.log("User object: ", objUser);
+          var arrayUser = {
+              'username' : objUser.users_name.toString(),
+              'biography' : objUser.biography,
+              'email' : objUser.users_mail.toString(),
+              'displayName' : objUser.displayName,
+              'birthDate' : objUser.birthDate_year+'-'+objUser.birthDate_month+'-'+objUser.birthDate_day
+            }
 
-            var arrayUser = {
-                'username' : objUser.users_name.toString(),
-                'password' : '',
-                'biography' : objUser.biography,
-                'email' : objUser.users_mail.toString(),
-                'displayName' : objUser.displayName,
-                'birthDate' : objUser.birthDate_year+'-'+objUser.birthDate_month+'-'+objUser.birthDate_day
-              }
-            sails.log("arrayUser: ", arrayUser);
+          usersToSave.push(arrayUser);
 
-            //usersToSave.push(arrayUser);
+          sails.log('usersToSave array push: ', usersToSave);
 
-            User.findOrCreate(arrayUser)
-            .exec(function createFindCB(err, record){
-              if(err){
-                sails.log.warn('findOrCreate err: '+err);
-              } else {
-                sails.log("record: ", record);
-              }
-            });
-
-        });
+        } // End for
         
-      }
+      } // End if err
       
-    });
+      
+      User.create(usersToSave).exec(function(err, newRecord) {
+        console.log('err: ', err);
+        console.log('newRecord: ', newRecord);
+      });
+      
+      /*
+      User.findOrCreate(usersToSave)
+      .exec(function createFindCB(err, record){
+        if(err){
+          sails.log.warn('findOrCreate err: '+err);
+        } else {
+          sails.log("record: ", record);
+        }
+      });
+      */
 
+    }); // End Drupal.query
+   
     /*
     View migracao_user fields:
     'user' AS field_data_field_name_first_user_entity_type, "
