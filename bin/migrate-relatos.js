@@ -39,7 +39,13 @@ function init() {
         //sails.log.info('jsonObj: ', relatoObjs[i]);
         //sails.log.info('relatoObjs keys:', Object.keys(relatoObjs[i]));
 
-        var arrayRelatoAll = {
+        User.find()
+        .where({ uid_drupal: relatoObjs[i].uid_usuario })
+        .exec(function (err, response) {
+            sails.log('response find uid_drupal: ', response);
+
+            var arrayRelatoAll = {
+              'creator' : relatoObjs[i].uid_usuario,
               'uid_usuario' : relatoObjs[i].uid_usuario,
               'titulo' : relatoObjs[i].titulo,
               'venda_seu_peixe' : relatoObjs[i].venda_seu_peixe,
@@ -61,6 +67,8 @@ function init() {
               'estado' : relatoObjs[i].estado,
               'comunidades' : relatoObjs[i].comunidades
             };
+
+        });        
 
         var arrayRelatoWe = {
               'uid_usuario' : relatoObjs[i].uid_usuario,

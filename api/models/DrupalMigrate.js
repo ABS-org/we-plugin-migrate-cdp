@@ -12,12 +12,20 @@ module.exports = {
 
   attributes: {
 
-    node_id: {
-      type: 'string',
-      required: true
+    uid_usuario_drupal: {
+      type: 'text'
     },
-    relato_id: {
-    	model: 'relato'
+    id_creator: {
+      type: 'text'
+    },
+    uid_conteudo_drupal: {
+      type: 'text'
+    },
+    id_conteudo_wejs: {
+      type: 'text'
+    },
+    type: {
+      type: 'text'
     }
 
   }

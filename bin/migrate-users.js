@@ -6,6 +6,7 @@
  */
 
 var cwd = process.cwd();
+var async = require('async');
 
 var loadSails = require(cwd + '/bin/loadSails.js');
 
@@ -44,71 +45,63 @@ function init() {
     Drupal.query(sql,function(err, sqlResult ){
 
       if(err){
-        sails.log.warn('err: ', err);
-      } else { 
+        sails.log.error('Erro Drupal.query: ', err);
+        return doneAll(err);
+      } 
 
-        for (var i = 0; i < sqlResult.length; i++) {
-          
-          objUser = sqlResult[i];
+      var objUser = [];
+      var arrayUser = {};
 
-          var arrayUser = {
-              'uid_drupal' : objUser.uid,
-              'username' : objUser.users_name.toString(),
-              'biography' : objUser.biography,
-              'email' : objUser.users_mail.toString(),
-              'displayName' : objUser.displayName,
-              'birthDate' : objUser.birthDate_year+'-'+objUser.birthDate_month+'-'+objUser.birthDate_day
+      // assuming openFiles is an array of file names 
+      async.each(sqlResult, function( result, done) {
+        // Perform operation on file here.
+        User
+        .findOne({ uid_drupal : result.uid })
+        .exec( function(err, userCreated){
+
+          if(userCreated){
+            sails.log.info('Usuário '+result.users_name+' já está criado.'); 
+            return done();
+          }
+
+          User.create({
+            'password' : 123456,
+            'uid_drupal' : result.uid,
+            'username' : result.users_name.toString(),
+            'biography' : result.biography,
+            'email' : result.users_mail.toString(),
+            'displayName' : result.displayName,
+            'birthDate' : result.birthDate_year+'-'+result.birthDate_month+'-'+result.birthDate_day
+          }).exec(function(err, newUser) {
+            if(err){
+              sails.log.error('Erro User.create: ', err);
+              return done(err);
             }
+            sails.log.info('newUser: ', newUser);
+            DrupalMigrate.create({
+              'uid_usuario_drupal': newUser.uid_drupal,
+              'id_creator': newUser.id,
+              'uid_conteudo_drupal': '',
+              'id_conteudo_wejs': '',
+              'type': 'user'
+            }).exec(function(err, newMigrate){
+              if(err){
+                sails.log.error('Erro DrupalMigrate.create: ', err);
+                return done(err);
+              }
+              sails.log.info('newMigrate: ', newMigrate);
+              done();
+            });
+          });
 
-          usersToSave.push(arrayUser);
+        });
 
-          sails.log('usersToSave array push: ', usersToSave);
-
-        } // End for
-        
-      } // End if err
-      
-      
-      User.create(usersToSave).exec(function(err, newRecord) {
-        console.log('err: ', err);
-        console.log('newRecord: ', newRecord);
+      }, function(err){
+          // if any of the file processing produced an error, err would equal that error
+          sails.log.error('async.each: ', err);
       });
-      
-      /*
-      User.findOrCreate(usersToSave)
-      .exec(function createFindCB(err, record){
-        if(err){
-          sails.log.warn('findOrCreate err: '+err);
-        } else {
-          sails.log("record: ", record);
-        }
-      });
-      */
 
     }); // End Drupal.query
-   
-    /*
-    View migracao_user fields:
-    'user' AS field_data_field_name_first_user_entity_type, "
-    'user' AS field_data_field_name_last_user_entity_type, "
-    'user' AS field_data_field_cpf_user_entity_type, "
-    'user' AS field_data_field_sexo_user_entity_type, "
-    'user' AS field_data_field_data_de_nascimento_user_entity_type, "
-    'user' AS field_data_field_bio_user_entity_type, "
-    'user' AS field_data_field_facebook_url_user_entity_type, "
-    'user' AS field_data_field_linkedin_url_user_entity_type, "
-    'user' AS field_data_field_twitter_url_user_entity_type, "
-    'user' AS field_data_field_cidade_user_entity_type, "
-    'user' AS field_data_field_curriculo_lattes_url_user_entity_type,"
-    'user' AS field_data_field_formacao_profissional_user_entity_type,"
-    'user' AS field_data_field__maior_grau_da_formacao_user_entity_type, "
-    'user' AS field_data_field_perfil_tipo_de_curso_user_entity_type, "
-    'user' AS field_data_field_perfil_nome_do_curso_user_entity_type, "
-    'user' AS field_data_field_perfil_instituicao_user_entity_type, "
-    'user' AS field_data_field_ano_da_conclusao_user_entity_type, "
-    'user' AS field_data_field_posso_oferecer_ajuda_em_user_entity_type, "
-    'user' AS field_data_field_gostaria_de_aprender_sobre_user_entity_type"
-     */
 
   })
 }
