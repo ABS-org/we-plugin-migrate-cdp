@@ -21,12 +21,14 @@ module.exports = {
     uid_conteudo_drupal: {
       type: 'text'
     },
-    id_conteudo_wejs: {
+    modelId: {
       type: 'text'
     },
-    type: {
+    modelName: {
       type: 'text'
+    },
+    imagesUploaded: {
+      type: 'boolean'
     }
-
   }
 };
