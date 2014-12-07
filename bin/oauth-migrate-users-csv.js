@@ -131,7 +131,7 @@ function init() {
     sails.log.debug('Path cwd: ',cwd);
 
     var testData = cwd + '/files/migration/migracao_users.csv';
-    var testData = cwd + '/files/migration/migracao_users_small.csv';
+    //var testData = cwd + '/files/migration/migracao_users_small.csv';
     var data = fs.readFileSync(testData).toString();
     var csvConverter = new CSVConverter();
 
