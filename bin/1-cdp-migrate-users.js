@@ -21,7 +21,7 @@ var usernameRegex = new RegExp(/^[a-z0-9_-]{4,30}$/);
 
 function generateRandonUserName(username) {
   if(!username || typeof username !== 'string') {
-    return uuid.v4();
+    return uuid.v4().substring(0, 25);
   }
 
   var userNomeNew = username.toString().split('@')[0];
