@@ -78,7 +78,7 @@ function init() {
     sails.log.debug('Path cwd: ',cwd);
 
     var testData = cwd + '/files/migration/migracao_relatos.csv';
-    var testData = cwd + '/files/migration/migracao_relatos_small.csv';
+    //var testData = cwd + '/files/migration/migracao_relatos_small.csv';
 
     var data = fs.readFileSync(testData).toString();
     var csvConverter = new CSVConverter();
