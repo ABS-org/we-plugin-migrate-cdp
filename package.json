@@ -1,14 +1,15 @@
 {
   "name": "we-plugin-migrate-cdp",
   "description": "We.js plugin we-plugin-migrate-cdp",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "license": "MIT",
   "main": "lib/index.js",
   "dependencies": {
     "async": "^0.9.0",
+    "csvtojson": "~0.3.14",
     "lodash": "^2.4.1",
-    "we-helpers": "^0.0.5",
-    "csvtojson": "~0.3.14"
+    "node-uuid": "^1.4.2",
+    "we-helpers": "^0.0.5"
   },
   "devDependencies": {
     "mocha": "^1.18.2",
@@ -27,11 +28,6 @@
     "posttest": "./node_modules/.bin/istanbul check-coverage && rm -rf coverage",
     "prepublish": "npm prune"
   },
-  "files": [
-    "api",
-    "config",
-    "lib"
-  ],
   "keywords": [
     "we.js",
     "wejs",
