@@ -55,19 +55,19 @@ function createIfNotExistsOneRelato(drupalRelato, done) {
   setRelatoTags(newRelato, drupalRelato);
 
 
-	// DrupalMigrate.findOne({
-	// 	uid_usuario_drupal: uid,
-	// 	modelName: 'user'
-	// })
-	// .exec(function(err, migrateUserRecord) {
-	// 	if(err) return done(err);
-	// 	if(!migrateUserRecord) {
-	// 		sails.log.warn('Drupal creator not found for migrate the relato', uid, drupalRelato.id );
-	// 		return done();
-	// 	}
+	DrupalMigrate.findOne({
+		uid_usuario_drupal: uid,
+		modelName: 'user'
+	})
+	.exec(function(err, migrateUserRecord) {
+		if(err) return done(err);
+		if(!migrateUserRecord) {
+			sails.log.warn('Drupal creator not found for migrate the relato', uid, drupalRelato.id );
+			return done();
+		}
 
-    //newRelato.creator = migrateUserRecord.id;
-    newRelato.creator = 1;
+    newRelato.creator = migrateUserRecord.id;
+    //newRelato.creator = 1;
 
 		if (drupalRelato.local) {
 			newRelato.estado = parseState(drupalRelato.local);
@@ -88,7 +88,7 @@ function createIfNotExistsOneRelato(drupalRelato, done) {
             if (!drupalRelato['Para começar, uma imagem']) return cb();
             var url = drupalRelato['Para começar, uma imagem'];
             downloadImage(url, newRelato.creator, function(err, image) {
-              if (err) return cb(err);
+              if (err) sails.log.error(err);
               if(image) {
                 newRecord.imagemDestaque = image.id;
               }
@@ -132,7 +132,7 @@ function createIfNotExistsOneRelato(drupalRelato, done) {
         })
 			})
 		})
-	// })
+	})
 
 }
 
