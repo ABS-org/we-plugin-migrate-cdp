@@ -23,7 +23,7 @@ function init() {
         .exec(function(err, sv) {
           if (err) return done(err);
           if(sv) {
-            saills.log.info('VocabularyFound', sv);
+            sails.log.info('VocabularyFound', sv);
             vocabulary = sv;
           }
 

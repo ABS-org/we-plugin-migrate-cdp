@@ -9,9 +9,6 @@ var cwd = process.cwd();
 
 var crypto = require('crypto');
 var loadSails = require(cwd + '/bin/loadSails.js');
-var uuid = require('node-uuid');
-//Converter Class
-var CSVConverter = require('csvtojson').core.Converter;
 var fs = require('fs');
 var async = require('async');
 
@@ -21,9 +18,7 @@ var validUsername = require('./utils/validUsername.js');
 var generateRandonUserName = require('./utils/validUsername.js');
 var usernameRegex = new RegExp(/^[a-z0-9_-]{4,30}$/);
 
-
 function createIfNotExistsOneUser(drupalUser, done) {
-
   var username;
   if (validUsername(drupalUser.Nome)) {
     username = drupalUser.Nome;
@@ -50,29 +45,29 @@ function createIfNotExistsOneUser(drupalUser, done) {
     locationState: parseState(drupalUser['Local da experiência'])
   }
 
-  if(!userToSave.email || !userToSave.cpf) return done();
+  if(!userToSave.email) return done();
 
   User.findOne({
     email: userToSave.email
-  }).exec( function(err, existsUser) {
+  }).exec( function (err, existsUser) {
     if(err) return done(err);
     if(existsUser) {
       // skip if exists
-      sails.log.info('user exists in db: ', userToSave, existsUser);
+      sails.log.warn('user exists in db: ', userToSave.email, existsUser.id);
       return done();
     }
 
     User.create(userToSave).exec(function(err, newRecord) {
       if(err) {
         if(err.invalidAttributes.username) {
-          userToSave.username = userToSave.username + crypto.randomBytes(3).toString('hex');
+          userToSave.username = userToSave.username + crypto.randomBytes(2).toString('hex');
           return User.create(userToSave)
           .exec(function(err, newRecord) {
             if(err) {
               sails.log.warn('>>>Error-on-import-user>>', err, userToSave);
               return done();
             }
-            afterCreateUser(drupalUser, newRecord, done);
+            return afterCreateUser(drupalUser, newRecord, done);
           });
 
         }
@@ -92,7 +87,6 @@ function afterCreateUser(drupalUser, newRecord, done) {
     modelName: 'user'
   }).exec(function(err, migrateRecord) {
     if (err) return done(err);
-
     sails.log.info('Done import user:',drupalUser.Email , drupalUser.Uid, migrateRecord.id);
     done();
   })
@@ -108,7 +102,6 @@ function init() {
 
     readExcel(filePath, function(err, data){
       if(err) return doneAll(err);
-
       async.eachSeries(data, createIfNotExistsOneUser, doneAll);
     })
   })
