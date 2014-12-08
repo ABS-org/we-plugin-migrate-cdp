@@ -16,8 +16,10 @@ var fs = require('fs');
 var async = require('async');
 
 var parseState = require('./utils/parseState.js');
+var readExcel = require('./utils/readExcelFile.js');
+var validUsername = require('./utils/validUsername.js');
 
-var usernameRegex = new RegExp(/^[a-z0-9_-]{4,30}$/);
+var usernameRegex = new RegExp(/^[a-z-9_-]{4,30}$/);
 
 function generateRandonUserName(username) {
   if(!username || typeof username !== 'string') {
@@ -25,34 +27,11 @@ function generateRandonUserName(username) {
   }
 
   var userNomeNew = username.toString().split('@')[0];
-  userNomeNew = username.toString().toLowerCase();
-  userNomeNew = userNomeNew.replace(/[^a-zA-Z ]/g, '');
-  userNomeNew = userNomeNew.replace(/\s/g, '')
-  userNomeNew = userNomeNew.substring(0, 21);
-  userNomeNew += crypto.randomBytes(4).toString('hex');
+  userNomeNew += crypto.randomBytes(3).toString('hex');
   return userNomeNew;
 }
 
-function validUsername(username){
-  var restrictedUsernames = [
-    'logout',
-    'login',
-    'auth',
-    'api',
-    'account',
-    'user'
-  ];
 
-  if (restrictedUsernames.indexOf(username) >= 0) {
-    return false;
-  }
-
-  if(usernameRegex.test(username)){
-    return true;
-  }
-
-  return false;
-}
 
 
 
@@ -65,7 +44,6 @@ function fix0CPF(cpf, places) {
 function createIfNotExistsOneUser(drupalUser, done) {
 
     var username;
-
     if (validUsername(drupalUser.Nome)) {
       username = drupalUser.Nome;
     } else {
@@ -78,8 +56,12 @@ function createIfNotExistsOneUser(drupalUser, done) {
       date = new Date(dateSplit[2], dateSplit[1], dateSplit[1]);
     }
 
+    var  cpf = fix0CPF(drupalUser.CPF, 11);
+
+    if(!cpf) cpf = null;
+
     var userToSave = {
-      'displayName': username['Nome real'],
+      'displayName': drupalUser['Nome real'],
       'username' : username,
       'biography' : drupalUser.Bio,
       'email' : drupalUser.Email,
@@ -91,6 +73,8 @@ function createIfNotExistsOneUser(drupalUser, done) {
       locationState: parseState(drupalUser['Local da experiência'])
     }
 
+    if(!userToSave.email || !userToSave.cpf) return done();
+
     User.findOne({
       where: {
         or: [
@@ -101,24 +85,32 @@ function createIfNotExistsOneUser(drupalUser, done) {
       }
     }).exec( function(err, existsUser) {
       if(err) return done(err);
-
       if(existsUser) {
         // skip if exists
         sails.log.info('user exists in db: ', userToSave, existsUser);
         return done();
       }
 
-      User.create(userToSave).exec(function(err, newRecord) {
-        if(err) return done(err);
+      User.findOne({ 'username': username})
+      .exec( function(err, usernameExists) {
+        if(err) return doneAll(err);
+        if(usernameExists) userToSave.username += crypto.randomBytes(3).toString('hex');
 
-        DrupalMigrate.create({
-          'uid_usuario_drupal': drupalUser.Uid,
-          modelId: newRecord.id,
-          modelName: 'user'
-        }).exec(function(err, migrateRecord) {
-          if (err) return done(err);
-          done();
-        })
+        User.create(userToSave).exec(function(err, newRecord) {
+          if(err) {
+            sails.log.error('Error on migrate user:', userToSave, drupalUser);
+            return done(err);
+          }
+
+          DrupalMigrate.create({
+            'uid_usuario_drupal': drupalUser.Uid,
+            modelId: newRecord.id,
+            modelName: 'user'
+          }).exec(function(err, migrateRecord) {
+            if (err) return done(err);
+            done();
+          })
+        });
       });
     });
 
@@ -130,19 +122,13 @@ function init() {
     sails.log.warn('Plugin migrate CdP...');
     sails.log.debug('Path cwd: ',cwd);
 
-    var testData = cwd + '/files/migration/migracao_users.csv';
-    //var testData = cwd + '/files/migration/migracao_users_small.csv';
-    var data = fs.readFileSync(testData).toString();
-    var csvConverter = new CSVConverter();
+    var filePath = cwd + '/files/migration/migracao_users.xlsx';
 
-    csvConverter.on('end_parsed', function(jsonObj) {
-        //final result poped here as normal.
-    });
-
-    csvConverter.fromString(data , function(err, jsonObjs){
+    readExcel(filePath, function(err, data){
       if(err) return doneAll(err);
-      async.each(jsonObjs, createIfNotExistsOneUser, doneAll);
-    });
+
+      async.each(data, createIfNotExistsOneUser, doneAll);
+    })
   })
 }
 

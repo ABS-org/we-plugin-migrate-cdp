@@ -16,8 +16,11 @@ var fs = require('fs');
 var async = require('async');
 
 var parseState = require('./utils/parseState.js');
+var readExcel = require('./utils/readExcelFile.js');
 
+var validUsername = require('./utils/validUsername.js');
 var usernameRegex = new RegExp(/^[a-z0-9_-]{4,30}$/);
+var validUsername = require('./utils/validUsername.js');
 
 function generateRandonUserName(username) {
   if(!username || typeof username !== 'string') {
@@ -25,34 +28,10 @@ function generateRandonUserName(username) {
   }
 
   var userNomeNew = username.toString().split('@')[0];
-  userNomeNew = username.toString().toLowerCase();
-  userNomeNew = userNomeNew.replace(/[^a-zA-Z ]/g, '');
-  userNomeNew = userNomeNew.replace(/\s/g, '')
-  userNomeNew = userNomeNew.substring(0, 21);
-  userNomeNew += crypto.randomBytes(4).toString('hex');
+  userNomeNew += crypto.randomBytes(3).toString('hex');
   return userNomeNew;
 }
 
-function validUsername(username){
-  var restrictedUsernames = [
-    'logout',
-    'login',
-    'auth',
-    'api',
-    'account',
-    'user'
-  ];
-
-  if (restrictedUsernames.indexOf(username) >= 0) {
-    return false;
-  }
-
-  if(usernameRegex.test(username)){
-    return true;
-  }
-
-  return false;
-}
 
 function fix0CPF(cpf, places) {
   if(!cpf) return cpf;

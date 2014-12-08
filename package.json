@@ -9,7 +9,8 @@
     "csvtojson": "~0.3.14",
     "lodash": "^2.4.1",
     "node-uuid": "^1.4.2",
-    "we-helpers": "^0.0.5"
+    "we-helpers": "^0.0.5",
+    "xlsx": "^0.7.12"
   },
   "devDependencies": {
     "mocha": "^1.18.2",
