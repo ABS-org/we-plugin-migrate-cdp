@@ -77,7 +77,7 @@ function createIfNotExistsOneUser(drupalUser, done) {
 
         }
         sails.log.error('Error on migrate user:', userToSave, drupalUser);
-        return done(err);
+        return done();
       } else {
         afterCreateUser(drupalUser, newRecord, done);
       }
@@ -118,6 +118,8 @@ function doneAll(err) {
   if ( err ) {
     sails.log.error('Error migrate users in cdp', err);
   }
+
+  sails.log.info('DONE ALL');
   //sails.load();
   // end / exit
   process.exit();
