@@ -18,22 +18,8 @@ var async = require('async');
 var parseState = require('./utils/parseState.js');
 var readExcel = require('./utils/readExcelFile.js');
 var validUsername = require('./utils/validUsername.js');
-
+var generateRandonUserName = require('./utils/validUsername.js');
 var usernameRegex = new RegExp(/^[a-z-9_-]{4,30}$/);
-
-function generateRandonUserName(username) {
-  if(!username || typeof username !== 'string') {
-    return crypto.randomBytes(8).toString('hex');
-  }
-
-  var userNomeNew = username.toString().split('@')[0];
-  userNomeNew += crypto.randomBytes(3).toString('hex');
-  return userNomeNew;
-}
-
-
-
-
 
 function fix0CPF(cpf, places) {
   if(!cpf) return cpf;
@@ -43,77 +29,88 @@ function fix0CPF(cpf, places) {
 
 function createIfNotExistsOneUser(drupalUser, done) {
 
-    var username;
-    if (validUsername(drupalUser.Nome)) {
-      username = drupalUser.Nome;
-    } else {
-      username = generateRandonUserName(drupalUser.Nome);
+  var username;
+  if (validUsername(drupalUser.Nome)) {
+    username = drupalUser.Nome;
+  } else {
+    username = generateRandonUserName(drupalUser.Nome);
+  }
+
+  var date = null;
+  if(drupalUser['Data de nascimento']) {
+    var dateSplit = drupalUser['Data de nascimento'].split('/');
+    date = new Date(dateSplit[2], dateSplit[1], dateSplit[1]);
+  }
+
+  var  cpf = fix0CPF(drupalUser.CPF, 11);
+
+  if(!cpf) cpf = null;
+
+  var userToSave = {
+    'displayName': drupalUser['Nome real'],
+    'username' : username,
+    'biography' : drupalUser.Bio,
+    'email' : drupalUser.Email,
+    'cpf': fix0CPF(drupalUser.CPF, 11),
+    birthDate: date,
+    active: true,
+    language: 'pt-br',
+    gender: drupalUser['Sexo'],
+    locationState: parseState(drupalUser['Local da experiência'])
+  }
+
+  if(!userToSave.email || !userToSave.cpf) return done();
+
+  User.findOne({
+    where: {
+      or: [
+        { email: userToSave.email,
+          cpf: userToSave.cpf
+        }
+      ]
+    }
+  }).exec( function(err, existsUser) {
+    if(err) return done(err);
+    if(existsUser) {
+      // skip if exists
+      sails.log.info('user exists in db: ', userToSave, existsUser);
+      return done();
     }
 
-    var date = null;
-    if(drupalUser['Data de nascimento']) {
-      var dateSplit = drupalUser['Data de nascimento'].split('/');
-      date = new Date(dateSplit[2], dateSplit[1], dateSplit[1]);
-    }
+    User.create(userToSave).exec(function(err, newRecord) {
+      if(err) {
+        if(err.invalidAttributes.username) {
+          userToSave.username = userToSave.username + crypto.randomBytes(3).toString('hex');
+          return User.create(userToSave)
+          .exec(function(err, newRecord) {
+            if(err) {
+              sails.log.warn('>>>Error-on-import-user>>', err, userToSave);
+              return done();
+            }
+            afterCreateUser(drupalUser, newRecord, done);
+          });
 
-    var  cpf = fix0CPF(drupalUser.CPF, 11);
-
-    if(!cpf) cpf = null;
-
-    var userToSave = {
-      'displayName': drupalUser['Nome real'],
-      'username' : username,
-      'biography' : drupalUser.Bio,
-      'email' : drupalUser.Email,
-      'cpf': fix0CPF(drupalUser.CPF, 11),
-      birthDate: date,
-      active: true,
-      language: 'pt-br',
-      gender: drupalUser['Sexo'],
-      locationState: parseState(drupalUser['Local da experiência'])
-    }
-
-    if(!userToSave.email || !userToSave.cpf) return done();
-
-    User.findOne({
-      where: {
-        or: [
-          { email: userToSave.email,
-            cpf: userToSave.cpf
-          }
-        ]
+        }
+        sails.log.error('Error on migrate user:', userToSave, drupalUser);
+        return done(err);
+      } else {
+        afterCreateUser(drupalUser, newRecord, done);
       }
-    }).exec( function(err, existsUser) {
-      if(err) return done(err);
-      if(existsUser) {
-        // skip if exists
-        sails.log.info('user exists in db: ', userToSave, existsUser);
-        return done();
-      }
-
-      User.findOne({ 'username': username})
-      .exec( function(err, usernameExists) {
-        if(err) return doneAll(err);
-        if(usernameExists) userToSave.username += crypto.randomBytes(3).toString('hex');
-
-        User.create(userToSave).exec(function(err, newRecord) {
-          if(err) {
-            sails.log.error('Error on migrate user:', userToSave, drupalUser);
-            return done(err);
-          }
-
-          DrupalMigrate.create({
-            'uid_usuario_drupal': drupalUser.Uid,
-            modelId: newRecord.id,
-            modelName: 'user'
-          }).exec(function(err, migrateRecord) {
-            if (err) return done(err);
-            done();
-          })
-        });
-      });
     });
+  });
+}
 
+function afterCreateUser(drupalUser, newRecord, done) {
+  DrupalMigrate.create({
+    'uid_usuario_drupal': drupalUser.Uid,
+    modelId: newRecord.id,
+    modelName: 'user'
+  }).exec(function(err, migrateRecord) {
+    if (err) return done(err);
+
+    sails.log.info('Done import user:',drupalUser.Email , drupalUser.Uid, migrateRecord.id);
+    done();
+  })
 }
 
 function init() {
@@ -127,7 +124,7 @@ function init() {
     readExcel(filePath, function(err, data){
       if(err) return doneAll(err);
 
-      async.each(data, createIfNotExistsOneUser, doneAll);
+      async.eachSeries(data, createIfNotExistsOneUser, doneAll);
     })
   })
 }
