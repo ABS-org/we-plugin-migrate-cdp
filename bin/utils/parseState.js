@@ -8,5 +8,8 @@ var regExp = /\(([^)]+)\)/;
 module.exports = function(string) {
   if(!string) return null;
   var matches = regExp.exec(string);
-  return matches[1];
+  if(matches && matches[1])
+    return matches[1];
+
+  return null;
 }
