@@ -20,11 +20,8 @@ var usernameRegex = new RegExp(/^[a-z0-9_-]{4,30}$/);
 
 function createIfNotExistsOneUser(drupalUser, done) {
   var username;
-  if (validUsername(drupalUser.Nome)) {
-    username = drupalUser.Nome;
-  } else {
-    username = generateRandonUserName(drupalUser.Nome);
-  }
+
+  username = drupalUser.Nome;
 
   var date = null;
   if(drupalUser['Data de nascimento']) {

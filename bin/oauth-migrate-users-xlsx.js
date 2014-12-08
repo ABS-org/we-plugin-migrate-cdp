@@ -30,11 +30,7 @@ function fix0CPF(cpf, places) {
 function createIfNotExistsOneUser(drupalUser, done) {
 
   var username;
-  if (validUsername(drupalUser.Nome)) {
-    username = drupalUser.Nome;
-  } else {
-    username = generateRandonUserName(drupalUser.Nome);
-  }
+  username = drupalUser.Nome;
 
   var date = null;
   if(drupalUser['Data de nascimento']) {
