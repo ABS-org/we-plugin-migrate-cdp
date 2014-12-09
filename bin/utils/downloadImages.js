@@ -22,12 +22,8 @@ module.exports = function downloadImage(url, creatorId, callback){
       image.creator = creatorId;
 
       image.extension = image.originalFilename.split('.').pop();
-      if(!image.extension) image.extension = 'jpg';
-      // TODO add suport to files withouth extension
-      if(!image.extension){
-        image.log.error('File extension not found', image);
-        return callback('File extension not found', null);
-      }
+
+      image.extension = 'jpg';
 
       image.filename += '.' + image.extension;
       image.name = image.filename;
