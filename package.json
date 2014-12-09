@@ -1,7 +1,7 @@
 {
   "name": "we-plugin-migrate-cdp",
   "description": "We.js plugin we-plugin-migrate-cdp",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "license": "MIT",
   "main": "lib/index.js",
   "dependencies": {
