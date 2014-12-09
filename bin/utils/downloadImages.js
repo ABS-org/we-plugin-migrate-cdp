@@ -31,6 +31,8 @@ module.exports = function downloadImage(url, creatorId, callback){
 
       image.filename += '.' + image.extension;
       image.name = image.filename;
+      // fix drupal crazy filename
+      image.name = image.name.replace('/', '_');
 
       var newFilePath = path.resolve(sails.config.imageUploadPath + '/' + 'original' + '/' + image.name);
 
