@@ -9,9 +9,14 @@ var readExcel = require('./utils/readExcelFile.js');
 
 
 function createIfNotExistsOneRecord(drupalComment, done) {
+
+  sails.log.debug('drupalComment: ', drupalComment);
+  return '';
+  /*
   var recordToSave = {
 
   }
+  */
 
 }
 
