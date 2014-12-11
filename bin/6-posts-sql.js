@@ -5,6 +5,64 @@
 var cwd = process.cwd();
 var loadSails = require(cwd + '/bin/loadSails.js');
 
+function createIfNotExistsOnePost(drupalPost, done){
+
+    // Verifica se o post existe com findOne
+    DrupalMigrate
+    .findOne({ uid_conteudo_drupal : drupalPost.nid })
+    .exec( function(err, postCreated){
+
+      if(postCreated){
+        sails.log.info('Post '+drupalPost.post_titulo+' já está criado.'); 
+        return done();
+      }
+
+      sails.log.info('Objeto post(drupalPost) (drupalPostado da consulta): ', drupalPost);
+      
+      // Verifica se o body nao esta vazio
+      if(drupalPost.post_body){
+
+        sails.log.info('Entrou no IF, proximo passo: CRIAR POST...');
+
+        // Cria o post
+        Post.create({
+          'active': 1,
+          'body': drupalPost.post_body,
+          'creator': 1
+        }).exec(function(err, newPost) {
+          if(err){
+            sails.log.error('Erro Post.create: ', err);
+            return done(err);
+          }
+
+          // Mostra novo post criado
+          sails.log.info('newPost: ', newPost);
+
+          // Registra migraçao no model DrupalMigrate
+          DrupalMigrate.create({
+            'uid_usuario_drupal': drupalPost.id_usuario_drupal,
+            'id_creator': '',
+            'uid_conteudo_drupal': drupalPost.post_nid_drupal,
+            'id_conteudo_wejs': newPost.id,
+            'type': 'post'
+          }).exec(function(err, newMigrate){
+            if(err){
+              sails.log.error('Erro DrupalMigrate.create: ', err);
+              return done(err);
+            }
+            sails.log.info('newMigrate: ', newMigrate);
+            return done();
+          });
+        });
+
+      } else { // end if drupalPost.post_body
+        return done();
+      }
+
+    }); // end findOne User
+
+}
+
 function init() {
   return loadSails(function afterLoadSails(err, sails) {
 
@@ -59,88 +117,8 @@ function init() {
               return doneAll(err);
             }
 
-            // Loop nos resultados da consulta atual
-            async.each(sqlResult, function( result, done) {
-              
-              // Verifica se o post existe com findOne
-              DrupalMigrate
-              .findOne({ uid_conteudo_drupal : result.nid })
-              .exec( function(err, postCreated){
+            async.eachSeries(sqlResult, createIfNotExistsOnePost, doneAll);
 
-                if(postCreated){
-                  sails.log.info('Post '+result.post_titulo+' já está criado.'); 
-                  return done();
-                }
-
-                sails.log.info('Objeto post(result) (resultado da consulta): ', result);
-
-                // Seleciona o id do usuario no wejs para salvar junto ao Post
-                /*
-                User
-                .findOne({ uid_usuario_drupal : result.id_usuario_drupal })
-                .exec( function(err, userWejs){
-                
-
-                  if(err){
-                    sails.log.error('Erro ao selecionar usuario: .'+err); 
-                    return done();
-                  }
-
-
-                  sails.log.info('Usuario seleciona para pegar o id no wejs: ', userWejs);
-                  return done();
-                */
-                
-                // Verifica se o body nao esta vazio
-                if(result.post_body){
-
-                  sails.log.info('Entrou no IF, proximo passo: CRIAR POST...');
-
-                  // Cria o post
-                  Post.create({
-                    'active': 1,
-                    'body': result.post_body,
-                    'creator': 1
-                  }).exec(function(err, newPost) {
-                    if(err){
-                      sails.log.error('Erro Post.create: ', err);
-                      return done(err);
-                    }
-
-                    // Mostra novo post criado
-                    sails.log.info('newPost: ', newPost);
-
-                    // Registra migraçao no model DrupalMigrate
-                    DrupalMigrate.create({
-                      'uid_usuario_drupal': result.id_usuario_drupal,
-                      'id_creator': '',
-                      'uid_conteudo_drupal': result.post_nid_drupal,
-                      'id_conteudo_wejs': newPost.id,
-                      'type': 'post'
-                    }).exec(function(err, newMigrate){
-                      if(err){
-                        sails.log.error('Erro DrupalMigrate.create: ', err);
-                        return done(err);
-                      }
-                      sails.log.info('newMigrate: ', newMigrate);
-                      done();
-                    });
-                  });
-
-                } else { // end if result.post_body
-                  done();
-                }
-
-                }); // end findOne User
-              
-              /*
-              }); // end findOne DrupalMigrate
-              */
-  
-            }, function(err){
-                // if any of the file processing produced an error, err would equal that error
-                sails.log.error('async.each: ', err);
-            });
           }); // End Drupal.query
          
         } // end for
