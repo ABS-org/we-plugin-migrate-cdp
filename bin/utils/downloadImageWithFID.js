@@ -6,9 +6,10 @@ module.exports = function downloadImageWithFID(fid, nodeCreatorId, cb) {
 
 	var sql = "SELECT * FROM `file_managed` WHERE fid=" + fid;
 	Drupal.query(sql, function (err, drupalImages) {
+		sails.log.info('image data to download', drupalImages);
 		if(err) return cb(err);
 		var drupalImage = drupalImages[0];
-		if(!drupalImages[0]) return cb(null, null);
+		if(!drupalImage) return cb(null, null);
 
 		var url = getImageUrlFromImageRecord(drupalImage);
 
