@@ -40,7 +40,6 @@ module.exports = function downloadImage(url, creatorId, callback){
             sails.log.error('Error on create image', err);
             return callback(err);
           }
-          sails.log.warn('salvedFile file', salvedFile)
           callback(null, salvedFile);
         });
 
