@@ -83,7 +83,7 @@ function updateRelatoExperienciaRecord(record, done) {
 
         getGaleriaImages(nid, creator.modelId, function(err, images) {
           if(err) sails.log.error('Error on get geleria images', record);
-
+sails.log.warn('>>>>>>>', err, images)
           if (images) {
             relato.images = images.map(function(i) {
               return i.id;
@@ -103,7 +103,7 @@ function updateRelatoExperienciaRecord(record, done) {
           relato.createdAt = moment.unix(record.created).toDate();
           relato.save(function(err){
             if( err ) sails.log.error('Error on save relato_de_curadoria', record, relato);
-            sails.log.warn('will save',relato, record);
+            sails.log.warn('will save',relato);
             //done(); 
           })
         })
@@ -127,6 +127,8 @@ function getGaleriaImages(nid, nodeCreatorId, cb) {
           sails.log.error('Error on download image for relato_de_curadoria');
           return next();
         }
+
+        sails.log.warn('image', image)
         images.push(image);
         next();
       });
