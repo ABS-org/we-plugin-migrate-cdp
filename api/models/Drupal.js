@@ -11,5 +11,7 @@ var util = require('util');
 
 module.exports = {
   // add your plugin controllers here
-  adapter: 'drupal'
+  adapter: 'drupal',
+
+  attributes: {}
 };
