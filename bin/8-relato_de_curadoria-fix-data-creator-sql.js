@@ -75,7 +75,7 @@ function updateRelatoExperienciaRecord(record, done) {
         }
 
         var nid = record.nid;
-        if ( !_isEmpty(relato.images) ) {
+        if ( !_.isEmpty(relato.images) ) {
           nid = null; // skip if already has images 
         }
 
