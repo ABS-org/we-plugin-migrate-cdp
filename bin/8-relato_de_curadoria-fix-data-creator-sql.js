@@ -61,6 +61,7 @@ function updateRelatoExperienciaRecord(record, done) {
 
       var fid = record.field_escolher_fotografia_imagem;
       if (relato.imagemDestaque) {
+        sails.log.info('Has image destaque', record.nid);
         fid = null; // set to null for skip image download if already has this image
       }
 
@@ -75,17 +76,18 @@ function updateRelatoExperienciaRecord(record, done) {
         }
 
         var nid = record.nid;
-        if ( !_.isEmpty(relato.images) ) {
+        if ( relato.images && relato.images.length) {
+          sails.log.info('Has images nid:', record.nid, ' length: ', relato.images.length);
           nid = null; // skip if already has images 
         }
 
         getGaleriaImages(nid, creator.modelId, function(err, images) {
           if(err) sails.log.error('Error on get geleria images', record);
-          
+
           if (images) {
             relato.images = images.map(function(i) {
               return i.id;
-            });  
+            });
           }
 
           
@@ -125,7 +127,7 @@ function getGaleriaImages(nid, nodeCreatorId, cb) {
           sails.log.error('Error on download image for relato_de_curadoria');
           return done();
         }
-        images.push(images);
+        images.push(image);
         next();
       });
     }, function(err) {
