@@ -81,11 +81,14 @@ function updateRelatoExperienciaRecord(record, done) {
 
         getGaleriaImages(nid, creator.modelId, function(err, images) {
           if(err) sails.log.error('Error on get geleria images', record);
+          
+          if (images) {
+            relato.images = images.map(function(i) {
+              return i.id;
+            });  
+          }
 
-          relato.images = images.map(function(i) {
-            return i.id;
-          });
-
+          
           if (record.title_field_value) relato.titulo = record.title_field_value;
 
           if ( record.field_experiencia_catespecificas ) {
