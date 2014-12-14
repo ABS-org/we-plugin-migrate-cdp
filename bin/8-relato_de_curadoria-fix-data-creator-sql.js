@@ -119,13 +119,13 @@ function getGaleriaImages(nid, nodeCreatorId, cb) {
 
   Drupal.query(sql, function(err, recordFiles) {
     if (err) return cb(err);
-    if (_.isEmpty(err)) return cb();
+    if (_.isEmpty(recordFiles)) return cb();
     var images = [];
     async.each(recordFiles, function(drupalFile, next) {
       downloadImageWithFID(drupalFile.fid, nodeCreatorId, function(err, image) {
         if (err) {
           sails.log.error('Error on download image for relato_de_curadoria');
-          return done();
+          return next();
         }
         images.push(image);
         next();
