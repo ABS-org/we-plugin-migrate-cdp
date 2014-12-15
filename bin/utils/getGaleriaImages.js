@@ -1,3 +1,6 @@
+var _ = require('lodash');
+var async = require('async');
+var downloadImageWithFID = require('./downloadImageWithFID.js');
 
 module.exports = function getGaleriaImages(nid, nodeCreatorId, cb) {
   if(!nid) return cb();
