@@ -16,7 +16,7 @@ module.exports = function getAltorEAtor(nid, cb) {
       })
     },
     function getAtores(done) {
-      var sqlAtor = "SELECT field_experiencia_ator_nome.field_experiencia_ator_nome_value FROM `field_data_field_experiencia_ator_nome` as field_experiencia_ator_nome where entity_type='node' and entity_id=" + nid;
+      var sqlAtor = "SELECT field_experiencia_ator_nome.field_experiencia_ator_nome_value AS nome FROM `field_data_field_experiencia_ator_nome` as field_experiencia_ator_nome where entity_type='node' and entity_id=" + nid;
 
       Drupal.query(sqlAtor, function(err, results) {
         if(err) return done(err);
