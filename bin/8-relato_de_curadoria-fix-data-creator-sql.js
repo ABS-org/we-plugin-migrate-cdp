@@ -202,7 +202,7 @@ function init() {
 
 function doneAll(err) {
   if ( err ) {
-    sails.log.error('Error migrate users in cdp', err);
+    sails.log.error('Error migrate relato_de_curadoria in cdp', err);
   }
 
   sails.log.info('DONE ALL');

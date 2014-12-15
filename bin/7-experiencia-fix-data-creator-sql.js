@@ -12,7 +12,10 @@ var crypto = require('crypto');
 var loadSails = require(cwd + '/bin/loadSails.js');
 var fs = require('fs');
 var async = require('async');
-
+var _ = require('lodash');
+var getRelatoTema = require('./utils/getRelatoTema.js');
+var downloadImageWithFID = require('./utils/downloadImageWithFID.js');
+var temas = {};
 
 function updateRelatoExperienciaRecord(record, done) {
   
@@ -56,22 +59,83 @@ function updateRelatoExperienciaRecord(record, done) {
 				return done('Relato not found: ' + relato_migrate.modelId);
 			}
 
-			relato.descricao = formatBody(record);
-			relato.creator = creator.modelId;
-			relato.updatedAt = moment.unix(record.changed).toDate();
-			relato.createdAt = moment.unix(record.created).toDate();
-			relato.save(function(err){
-				if( err ) sails.log.error('Error on save relato', record, relato);
+      var fid = record.field_imagem_de_destaque;
+      if (relato.imagemDestaque) {
+        fid = null; // set to null for skip image download if already has this image
+      }
 
-				//sails.log.warn('will save',relato, record )
+      downloadImageWithFID(fid, creator.modelId, function(err, image) {
+        if (err) {
+          sails.log.error('Error on download image for relato_de_curadoria');
+          return done();
+        }
 
-		    done();	
-			})
+        if (image && image.id) {
+          relato.imagemDestaque = image.id;  
+        }
+
+        var nid = record.nid;
+        if ( relato.images && relato.images.length) {
+          nid = null; // skip if already has images 
+        }
+
+        getGaleriaImages(nid, creator.modelId, function(err, images) {
+          if(err) sails.log.error('Error on get geleria images', record);
+          if (images) {
+            images.forEach(function(i){
+              relato.images.add(i);
+            });
+          }
+
+          if ( record.field_experiencia_catespecificas ) {
+            relato.categorias = [getRelatoTema(record, temas)];  
+          }
+
+					relato.descricao = formatBody(record);
+					relato.creator = creator.modelId;
+					relato.updatedAt = moment.unix(record.changed).toDate();
+					relato.createdAt = moment.unix(record.created).toDate();
+					relato.save(function(err){
+						if( err ) sails.log.error('Error on save relato', record, relato);
+						//sails.log.warn('will save',relato, record )
+				    done();	
+					})
+				})
+			})	
 		});
 
 	})
 
  };
+
+function getGaleriaImages(nid, nodeCreatorId, cb) {
+  if(!nid) return cb();
+
+  var sql = "SELECT field.`entity_id` AS nid, field.`field_imagem_de_destaque_fid` AS fid, file.`uri` AS uri FROM `field_data_field_imagem_de_destaque` AS field LEFT JOIN `file_managed` AS file ON file.fid = field.`field_imagem_de_destaque_fid` WHERE field.`entity_id`=" + nid + " AND field.`bundle`='experiencia'";
+
+  Drupal.query(sql, function(err, recordFiles) {
+    if (err) return cb(err);
+    if (_.isEmpty(recordFiles)) return cb();
+    var images = [];
+    async.each(recordFiles, function(drupalFile, next) {
+      downloadImageWithFID(drupalFile.fid, nodeCreatorId, function(err, image) {
+        if (err) {
+          sails.log.error('Error on download image for relato_de_curadoria');
+          return next();
+        }
+        images.push(image);
+        next();
+      });
+    }, function(err) {
+      if(err) {
+        sails.log.error('Error on get galeria files', err);
+        return cb(err);
+      }
+      cb(null, images);
+    });
+  })
+}
+
 
 function formatBody(record) {
 	var body = '';
@@ -112,25 +176,37 @@ function formatBodyTitle(text) {
 }
 
 
+
 function init() {
   return loadSails(function afterLoadSails(err, sails) {
 
     sails.log.warn('Plugin migrate CdP...');
     sails.log.debug('Path cwd: ',cwd);
 
-    var sql = "SELECT n.`nid`, n.`type`, n.`uid`, n.`status`, n.`created`,  n.`changed`, n.`tnid`, field_descricao.`field_descricao_value` AS field_descricao, 	field_experiencia_desenvolvida.`field_experiencia_desenvolvida_value` AS field_experiencia_desenvolvida, field_experiencia_funcionamento.`field_experiencia_funcionamento_value` AS field_experiencia_funcionamento, 	field_experiencia_desafios.`field_experiencia_desafios_value` AS field_experiencia_desafios, 	field_experiencia_novidades.`field_experiencia_novidades_value` AS field_experiencia_novidades, 	field_experiencia_observacoes.`field_experiencia_observacoes_value` AS field_experiencia_observacoes FROM `node` AS n	LEFT JOIN `field_data_field_descricao` AS field_descricao ON field_descricao.entity_id=n.nid	LEFT JOIN `field_data_field_experiencia_desenvolvida` AS field_experiencia_desenvolvida ON field_experiencia_desenvolvida.entity_id=n.nid	LEFT JOIN `field_data_field_experiencia_funcionamento` AS field_experiencia_funcionamento ON field_experiencia_funcionamento.entity_id=n.nid	LEFT JOIN `field_data_field_experiencia_desafios` AS field_experiencia_desafios ON field_experiencia_desafios.entity_id=n.nid	LEFT JOIN `field_data_field_experiencia_novidades` AS field_experiencia_novidades ON field_experiencia_novidades.entity_id=n.nid LEFT JOIN `field_data_field_experiencia_observacoes` AS field_experiencia_observacoes ON field_experiencia_observacoes.entity_id=n.nid WHERE `status`=1 AND `type`='experiencia'";
+    // preload terms
+    Term.find().exec(function(err, terms) {
+      if(err) return doneAll(err);
+      if( _.isEmpty(terms) ) return doneAll('Nenhum tema encontrado');
+
+      terms.forEach(function(t){
+        temas[t.text] = t;
+      });
+
+    var sql = "SELECT n.`nid`, n.`type`, n.`uid`, n.`status`, n.`created`,  n.`changed`, n.`tnid`, field_descricao.`field_descricao_value` AS field_descricao, 	field_experiencia_desenvolvida.`field_experiencia_desenvolvida_value` AS field_experiencia_desenvolvida, field_experiencia_funcionamento.`field_experiencia_funcionamento_value` AS field_experiencia_funcionamento, 	field_experiencia_desafios.`field_experiencia_desafios_value` AS field_experiencia_desafios, 	field_experiencia_novidades.`field_experiencia_novidades_value` AS field_experiencia_novidades, 	field_experiencia_observacoes.`field_experiencia_observacoes_value` AS field_experiencia_observacoes, field_experiencia_catespecificas.`field_experiencia_catespecificas_tid` AS  field_experiencia_catespecificas, field_imagem_de_destaque.`field_imagem_de_destaque_fid` AS field_imagem_de_destaque FROM `node` AS n LEFT JOIN `field_data_field_imagem_de_destaque` AS field_imagem_de_destaque ON field_imagem_de_destaque.entity_id=n.nid LEFT JOIN `field_data_field_experiencia_catespecificas` AS field_experiencia_catespecificas ON field_experiencia_catespecificas.entity_id=n.nid LEFT JOIN `field_data_field_descricao` AS field_descricao ON field_descricao.entity_id=n.nid	LEFT JOIN `field_data_field_experiencia_desenvolvida` AS field_experiencia_desenvolvida ON field_experiencia_desenvolvida.entity_id=n.nid	LEFT JOIN `field_data_field_experiencia_funcionamento` AS field_experiencia_funcionamento ON field_experiencia_funcionamento.entity_id=n.nid	LEFT JOIN `field_data_field_experiencia_desafios` AS field_experiencia_desafios ON field_experiencia_desafios.entity_id=n.nid	LEFT JOIN `field_data_field_experiencia_novidades` AS field_experiencia_novidades ON field_experiencia_novidades.entity_id=n.nid LEFT JOIN `field_data_field_experiencia_observacoes` AS field_experiencia_observacoes ON field_experiencia_observacoes.entity_id=n.nid WHERE `status`=1 AND `type`='experiencia'";
 
     Drupal.query(sql, function (err, records) {
       if(err) return doneAll(err);
       async.eachSeries(records, updateRelatoExperienciaRecord, doneAll);
     })
 
+ 	  }) // end preload terms
+
   })
 }
 
 function doneAll(err) {
   if ( err ) {
-    sails.log.error('Error migrate users in cdp', err);
+    sails.log.error('Error migrate experiencia in cdp', err);
   }
 
   sails.log.info('DONE ALL');
