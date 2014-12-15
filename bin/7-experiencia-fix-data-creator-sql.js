@@ -15,13 +15,17 @@ var async = require('async');
 var _ = require('lodash');
 var getRelatoTema = require('./utils/getRelatoTema.js');
 var downloadImageWithFID = require('./utils/downloadImageWithFID.js');
+var getGaleriaImages = require('./utils/getGaleriaImages.js');
+var getAltorEAtor = require('./utils/getAltorEAtor.js');
 var temas = {};
 
 function updateRelatoExperienciaRecord(record, done) {
   
 	var creator;
 	var relato_migrate;
-
+  var autores = [];
+  var atores = [];
+  
 	async.parallel([
 		function getDbUser(cb) {
 			DrupalMigrate.findOne({
@@ -43,8 +47,15 @@ function updateRelatoExperienciaRecord(record, done) {
 				relato_migrate = r;
 				cb();
 			})
-		}		
-
+		},
+    function getPeople(cb) {
+      getAltorEAtor(record.nid , function (err, au, at){
+        if(err) return cb(err);
+        autores = au;
+        atores = at;
+        cb();
+      })
+    }
 	], function(err) {
 		if(err) return doneAll(err);
 		if(!creator || !relato_migrate) {
@@ -91,6 +102,8 @@ function updateRelatoExperienciaRecord(record, done) {
             relato.categorias = [getRelatoTema(record, temas)];  
           }
 
+          relato.atoresExt = atores;
+          relato.autoresExt = autores;
 					relato.descricao = formatBody(record);
 					relato.creator = creator.modelId;
 					relato.updatedAt = moment.unix(record.changed).toDate();
@@ -107,35 +120,6 @@ function updateRelatoExperienciaRecord(record, done) {
 	})
 
  };
-
-function getGaleriaImages(nid, nodeCreatorId, cb) {
-  if(!nid) return cb();
-
-  var sql = "SELECT field.`entity_id` AS nid, field.`field_imagem_fid` AS fid, file.`uri` AS uri FROM `field_data_field_imagem` AS field LEFT JOIN `file_managed` AS file ON file.fid = field.`field_imagem_fid` WHERE field.`entity_id`=" + nid + " AND field.`bundle`='experiencia'";
-
-  Drupal.query(sql, function(err, recordFiles) {
-    if (err) return cb(err);
-    if (_.isEmpty(recordFiles)) return cb();
-    var images = [];
-    async.each(recordFiles, function(drupalFile, next) {
-      downloadImageWithFID(drupalFile.fid, nodeCreatorId, function(err, image) {
-        if (err) {
-          sails.log.error('Error on download image for relato_de_curadoria');
-          return next();
-        }
-        images.push(image);
-        next();
-      });
-    }, function(err) {
-      if(err) {
-        sails.log.error('Error on get galeria files', err);
-        return cb(err);
-      }
-      cb(null, images);
-    });
-  })
-}
-
 
 function formatBody(record) {
 	var body = '';

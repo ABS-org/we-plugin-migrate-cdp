@@ -15,12 +15,15 @@ var async = require('async');
 var _ = require('lodash');
 var getRelatoTema = require('./utils/getRelatoTema.js');
 var downloadImageWithFID = require('./utils/downloadImageWithFID.js');
+var getAltorEAtor = require('./utils/getAltorEAtor.js');
 var temas = {};
 
 function updateRelatoExperienciaRecord(record, done) {
   
 	var creator;
 	var relato_migrate;
+  var autores = [];
+  var atores = [];
 
 	async.parallel([
 		function getDbUser(cb) {
@@ -42,7 +45,15 @@ function updateRelatoExperienciaRecord(record, done) {
 				relato_migrate = r;
 				cb();
 			})
-		}		
+		},
+    function getPeople(cb) {
+      getAltorEAtor(record.nid , function (err, au, at){
+        if(err) return cb(err);
+        autores = au;
+        atores = at;
+        cb();
+      })
+    }
 
 	], function(err) {
 		if(err) return doneAll(err);
@@ -93,6 +104,8 @@ function updateRelatoExperienciaRecord(record, done) {
             relato.categorias = [getRelatoTema(record, temas)];  
           }
 
+          relato.atoresExt = atores;
+          relato.autoresExt = autores;
           relato.descricao = formatBody(record);
           relato.creator = creator.modelId;
           relato.updatedAt = moment.unix(record.changed).toDate();
