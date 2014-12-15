@@ -110,8 +110,8 @@ function updateRelatoExperienciaRecord(record, done) {
           relato.createdAt = moment.unix(record.created).toDate();
           relato.save(function(err){
             if( err ) sails.log.error('Error on save relato', record, relato);
-            sails.log.warn('will save',relato )
-            //done(); 
+            //sails.log.warn('will save',relato )
+            done(); 
           })
         })
       })  
