@@ -71,7 +71,6 @@ function createIfNotExistsOneRecord(migrateRecord, done) {
       if (err) {
         sails.log.error('Erro ao salvar os comentários', err);
       }
-
       done();
     });
   });
@@ -91,7 +90,7 @@ function afterCreateOneComment(drupalComment, comment, done) {
       return done();
     }
     sails.log.info('Done import on comment:',drupalComment.cid , comment.id, migrateRecord.id);
-    // /done();
+    done();
   })
 }
 
