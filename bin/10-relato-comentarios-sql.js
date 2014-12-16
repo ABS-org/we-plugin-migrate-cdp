@@ -6,12 +6,6 @@
  *    node node_modules/we-plugin-migrate-cdp/bin/10-relato-comentarios-sql.js
  */
 
-
-
-
-
-
-
 var cwd = process.cwd();
 
 var moment = require('moment');
@@ -50,22 +44,36 @@ function createIfNotExistsOneRecord(migrateRecord, done) {
           return next();
         }
 
-        Comment.create({
-          creator: userMigrate.modelId,
-          body: drupalComment.comment_body,
-          modelName: 'relato',
-          modelId: migrateRecord.modelId,
-          createdAt: moment.unix(drupalComment.created).toDate(),
-          updatedAt: moment.unix(drupalComment.changed).toDate()
-        }).exec(function(err, comment) {
+        DrupalMigrate.findOne({
+          'uid_conteudo_drupal': drupalComment.cid,
+           modelName: 'comment'
+        }).exec(function (err, isSalved){
           if(err) {
-            sails.log.error('Error on create comment', err);
+            sails.log.error('Error on find user to:',drupalComment.uid , err);
             return next();
           }
 
-          afterCreateOneComment(drupalComment, comment, next);
-        });
+          if (isSalved) {
+            sails.log.info('O comentário já existe', drupalComment.cid);
+            return next();
+          }
 
+          Comment.create({
+            creator: userMigrate.modelId,
+            body: drupalComment.comment_body,
+            modelName: 'relato',
+            modelId: migrateRecord.modelId,
+            createdAt: moment.unix(drupalComment.created).toDate(),
+            updatedAt: moment.unix(drupalComment.changed).toDate()
+          }).exec(function(err, comment) {
+            if(err) {
+              sails.log.error('Error on create comment', err);
+              return next();
+            }
+
+            afterCreateOneComment(drupalComment, comment, next);
+          });
+        });
       })
     }, function (err) {
       if (err) {
@@ -81,7 +89,7 @@ function afterCreateOneComment(drupalComment, comment, done) {
   DrupalMigrate.create({
     'uid_usuario_drupal': drupalComment.uid,
     'id_creator': comment.creator,
-    'uid_conteudo_drupal': drupalComment.Uid,
+    'uid_conteudo_drupal': drupalComment.cid,
     modelId: comment.id,
     modelName: 'comment'
   }).exec(function(err, migrateRecord) {
@@ -93,22 +101,6 @@ function afterCreateOneComment(drupalComment, comment, done) {
     done();
   })
 }
-
-
-
-
-// function afterCreate(dataRecord, newRecord, done) {
-//   DrupalMigrate.create({
-//     'uid_usuario_drupal': drupalUser.Uid,
-//     modelId: newRecord.id,
-//     modelName: 'user'
-//   }).exec(function(err, migrateRecord) {
-//     if (err) return done(err);
-//     sails.log.info('Done import user:',drupalUser.Email , drupalUser.Uid, migrateRecord.id);
-//     done();
-//   })
-// }
-
 
 function init() {
   return loadSails(function afterLoadSails(err, sails) {
