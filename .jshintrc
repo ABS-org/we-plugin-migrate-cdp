@@ -32,6 +32,10 @@
   , "beforeEach"
   , "after"
   , "afterEach"
+  , "sails"
+  , "DrupalMigrate"
+  , "Drupal"
+  , "Comment"
   ]
 , "smarttabs": true
 , "strict": false

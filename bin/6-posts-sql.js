@@ -5,7 +5,7 @@
 var cwd = process.cwd();
 var loadSails = require(cwd + '/bin/loadSails.js');
 
-function createIfNotExistsOnePost(drupalPost, done){
+function createIfNotExistsOnePost(drupalPost, done) {
 
     // Verifica se o post existe com findOne
     DrupalMigrate
@@ -69,7 +69,7 @@ function init() {
     sails.log('Plugin migrate CdP...');
     sails.log('Path cwd: ',cwd);
 
-    var sqlCountAll = "SELECT title FROM node WHERE type = 'post'";
+    var sqlCountAll = "SELECT COUNT(title) FROM node WHERE type = 'post'";
 
     // Seleciona todos os registros da tabela
     Drupal.query(sqlCountAll,function(err, sqlResultCount ){
@@ -78,11 +78,11 @@ function init() {
         sails.log.error('err: ', err);
         return doneAll(err);
       }
-      sails.log.info('Valor toral dos registros na tabela de posts: ', sqlResultCount.length);
+      sails.log.info('Valor toral dos registros na tabela de posts: ', sqlResultCount);
 
       // Calcula o total dividido por 50, para fazer o loop de 50 em 50 registros na tabela de usuários
       var sumTotalFor = Math.round(sqlResultCount.length / 50);
-      sails.log.info('A inserção de 50 em 50 registros será feita '+sumTotalFor+' vezes.');
+      sails.log.info('A inserção de 50 em 50 registros será feita '+sumTotalFor + ' vezes.');
 
       // Faz um loop para migrar de 50 em 50 itens
       for (iReg = 0; iReg < sumTotalFor; iReg++) {
