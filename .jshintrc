@@ -36,6 +36,7 @@
   , "DrupalMigrate"
   , "Drupal"
   , "Comment"
+  , "User"
   ]
 , "smarttabs": true
 , "strict": false
