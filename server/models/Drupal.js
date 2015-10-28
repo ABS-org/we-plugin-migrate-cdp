@@ -6,7 +6,7 @@
  */
 
 // we.js controller utils
-var actionUtil = require('we-helpers').actionUtil;
+var actionUtil = require('wejsv2old-helpers').actionUtil;
 var util = require('util');
 
 module.exports = {

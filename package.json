@@ -1,6 +1,6 @@
 {
-  "name": "we-plugin-migrate-cdp",
-  "description": "We.js plugin we-plugin-migrate-cdp",
+  "name": "wejsv2old-plugin-migrate-cdp",
+  "description": "We.js plugin wejsv2old-plugin-migrate-cdp",
   "version": "0.2.1",
   "license": "MIT",
   "main": "lib/index.js",
@@ -12,7 +12,7 @@
     "node-uuid": "^1.4.2",
     "request": "^2.49.0",
     "uuid": "^2.0.1",
-    "we-helpers": "^0.0.7",
+    "wejsv2old-helpers": "^0.0.7",
     "xlsx": "^0.7.12"
   },
   "devDependencies": {
@@ -25,21 +25,10 @@
     "node": ">=0.10.0"
   },
   "scripts": {
-    "lint": "./node_modules/.bin/jshint .",
-    "checkStyle": "./node_modules/.bin/jscs .",
-    "pretest": "npm run-script lint && npm run-script checkStyle",
-    "test": "./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha test",
-    "posttest": "./node_modules/.bin/istanbul check-coverage && rm -rf coverage",
-    "prepublish": "npm prune"
+    "test": "./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha test"
   },
-  "keywords": [
-    "we.js",
-    "wejs",
-    "plugin",
-    "sails.js"
-  ],
   "repository": {
     "type": "git",
-    "url": "git@github.com:ABS-org/we-plugin-migrate-cdp.git"
+    "url": "git@github.com:ABS-org/wejsv2old-plugin-migrate-cdp.git"
   }
 }
